@@ -109,11 +109,12 @@ The preload arms once per boot, keyed on
 once in the lifetime of the data partition). It forks
 `/bin/sh /data/payload/activate.sh` as root.
 
-After a cold reboot:
+After a cold reboot (default PoC credentials — user `root`, password
+`denonprime4`):
 
 ```
 $ ssh root@<unit-ip>
-password: <configured-password>
+password: denonprime4
 uid=0(root) gid=0(root) groups=0(root),10(wheel)
 ```
 
@@ -135,15 +136,26 @@ tests/       offline checks
 
 ## 5. Quick start (USB route)
 
-Build the ext4 image:
+Build the ext4 image (default password `denonprime4`):
 
 ```sh
-PASSWORD='choose-a-strong-password' ./exploit/make_usb_p4pwn.sh
+./exploit/make_usb_p4pwn.sh
 ```
 
-The image is written **raw** to a USB stick (Rufus DD mode, balenaEtcher or
-`dd`). It is not bootable and Windows cannot read it — cancel any format
-prompt.
+To use a different password, run `exploit/hash-password.sh` and replace the
+`ROOT_HASH` line in `exploit/usb-p4pwn/run.sh` and
+`exploit/preload/activate.sh`, then rebuild.
+
+The image is written **raw** to a USB stick. On Windows use **balenaEtcher**:
+
+1. *Flash from file* → select `build/usb-p4pwn.img`;
+2. select the USB stick;
+3. *Flash*;
+4. cancel any “You need to format this disk” prompt — the stick is ext4 on
+   purpose and Windows cannot read it.
+
+On Linux/macOS use `dd` (or balenaEtcher as well). The image is not bootable;
+that is expected.
 
 On the unit:
 
@@ -151,7 +163,7 @@ On the unit:
 2. Settings → About/Update → tap the version/product name five times;
 3. Advanced → **Start Production Test Application**;
 4. wait ~10 seconds;
-5. `ssh root@<unit-ip>` with the configured password.
+5. `ssh root@<unit-ip>` — user `root`, password `denonprime4` by default.
 
 The launcher may display an “unexpected error” dialog after the auto-run; that
 is the dummy `.taimg` failing to mount. The injected command has already run.

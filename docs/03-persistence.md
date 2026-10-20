@@ -85,7 +85,7 @@ ssh root@<unit> 'sync; reboot'
 After the reboot:
 
 ```
-$ ssh root@<unit>
+$ ssh root@<unit>          # default PoC password: denonprime4
 uid=0(root) ...
 $ tail /data/payload/activate.log
 ... activate.sh start
