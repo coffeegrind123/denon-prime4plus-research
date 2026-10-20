@@ -10,6 +10,7 @@ REMOTE_BINARY=/tmp/prime4-ui-touch
 : "${UNIT_HOST:?set UNIT_HOST to the player address}"
 UNIT_USER=${UNIT_USER:-root}
 : "${UNIT_PASS:?set UNIT_PASS in the environment}"
+export SSHPASS="$UNIT_PASS"
 
 SSH_OPTIONS=(
     -o StrictHostKeyChecking=no
