@@ -16,9 +16,9 @@ The feed currently advertises `PRIME4PLUS` 5.0.4 and an update-image URL below
 
 Engine exposes update UI actions including `checkForUpdates`, `updateOnline`,
 `updateOnlineForUrl`, and `updateFromComputer`. The Engine binary also accepts
-an `updateServerUrl` command-line override. A local invalid URL can suppress the
-online check, but the update chain still needs a runtime guard because manual
-local and loader paths remain.
+an `updateServerUrl` command-line override. That override is not required for
+safety: blocking the executable handoffs prevents all apply operations while
+leaving Engine itself untouched.
 
 `skipFirmwareUpdate` exists in Engine, but its surrounding strings describe
 connected-device/MCU firmware checks. It should not be treated as an Engine OS
@@ -74,7 +74,6 @@ The prototype under `tools/update-guard/` bind-mounts wrappers over:
 /usr/sbin/az01-update
 /usr/bin/planck-remote-screen
 /usr/bin/systemctl
-/usr/Engine/Scripts/engine
 ```
 
 The originals are first copied under `/data/update-guard/`.
@@ -83,9 +82,7 @@ The wrappers:
 
 * reject every `az01-update` operation except `--help`;
 * allow normal `planck-remote-screen` operation but reject `--update` and `-u`;
-* allow normal systemctl and reboot behavior but reject `reboot loader`;
-* replace Engine's online update URL with `http://127.0.0.1:9/PrimeUpdates.xml`
-  in the guarded shell script.
+* allow normal systemctl and reboot behavior but reject `reboot loader`.
 
 QEMU results:
 
@@ -128,7 +125,7 @@ The guard was tested against a fresh disposable rootfs/data pair:
 | Reapply before Engine at boot | passed |
 
 The Engine branch tests used a disposable fake Engine process that emitted each
-quit reason, allowing the real guarded `engine` shell script to execute its
+quit reason, allowing the real unmodified `engine` shell script to execute its
 normal update cases without starting the QEMU graphics stack.
 
 The boot-reapply test used a one-shot systemd test unit calling the same

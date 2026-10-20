@@ -2,7 +2,7 @@
 
 Research notes and proof-of-concept code for a Denon DJ Prime 4+ (`JC11S`)
 running Engine OS **4.3.4** (Buildroot 2023.02.11).
-Current research release: **v0.2.8**.
+Current research release: **v0.2.9**.
 
 The work covers five things:
 

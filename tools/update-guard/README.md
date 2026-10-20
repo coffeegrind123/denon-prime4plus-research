@@ -9,13 +9,13 @@ and tested only against disposable QEMU images.
   reset, and data erase;
 * `/usr/bin/planck-remote-screen --update` — the online update handoff;
 * `/sbin/reboot loader` — Engine's transition into bootloader update mode;
-* Engine's default online update feed — replaced with an unreachable local
-  URL in the guarded copy of `/usr/Engine/Scripts/engine`.
 
-The original binaries and engine script are copied into
-`/data/update-guard/*.orig`. Bind mounts place small wrappers over the
-read-only rootfs paths. Reboot, or running `uninstall.sh`, removes the bind
-mounts without changing the signed rootfs.
+The original executables are copied into `/data/update-guard/*.orig`. Bind
+mounts place small wrappers over the read-only rootfs paths. Reboot, or running
+`uninstall.sh`, removes the bind mounts without changing the signed rootfs.
+
+The online checker may still report that an update exists. Every apply path
+rejects the operation before an update image is used.
 
 ## Install
 
