@@ -1,0 +1,217 @@
+# Denon Prime 4+ / Engine OS 4.3.4 — Security Research
+
+Research notes and proof-of-concept code for a Denon DJ Prime 4+ (`JC11S`)
+running Engine OS **4.3.4** (Buildroot 2023.02.11).
+
+The work covers three things:
+
+1. a no-PC code-execution path through the factory **Production Test
+   Application** launcher, reachable from a USB stick;
+2. a persistent root shell built on the unverified `/data` partition;
+3. a complete Docker-hosted QEMU lab used to reproduce and test every step
+   against the real ARMv7 userland.
+
+Everything below was reproduced on hardware and in emulation. No vendor
+firmware, private keys, device serials, LAN addresses or personal data are
+included.
+
+---
+
+## 1. Executive summary
+
+| Finding | Result |
+|---|---|
+| AZ0x update container | RSA-2048 signed; cannot be repacked without the vendor key |
+| Kernel FIT signature | hash nodes enforced, **config signature fail-open** (no `required`) |
+| dm-verity | root hash bound only by the signed FIT cmdline |
+| Production Test App V1 catalogue | documented layout is wrong; app and OS version directories are swapped |
+| Launcher execution | auto-runs the catalogued `.taimg` path through `wordexp` without `WRDE_NOCMD` |
+| Result | arbitrary command execution as **root** before any image/signature check |
+| Persistence | `/etc` and `/var` are overlays with upper layers on the unverified `/data` partition |
+| Boot trigger | `/etc/ld.so.preload` + a boot-id marker; survives reboots |
+| Access | password SSH on port 22, verified after a cold reboot |
+| QEMU lab | full Engine OS 4.3.4 userspace boot in a Docker container |
+
+The vendor’s own firmware update tooling and the community reverse-engineering
+projects ([icedream/denon-prime4], [Peyton-C/QEngine], [DeathCamel58/denon-reverse-engineering])
+were used as references. None of their code is vendored here.
+
+---
+
+## 2. The short version of the bug
+
+Engine OS 4.3.4 ships a factory “Production Test Application” launcher. It
+scans attached media for a **V1** catalogue:
+
+```
+<mount>/TestAppsCatalog/<PRODUCT>/<APP-VERSION>/<OS-VERSION>/<name>.taimg
+```
+
+The published documentation (and the first packages we built) used
+`<PRODUCT>/<OS-VERSION>/<APP-VERSION>/`, which makes the launcher scan the
+directory and then report `No matching test app found`.
+
+With the correct order, the launcher:
+
+1. matches `productCode=JC11S`, `osVersionID=2023.02.11`;
+2. waits five seconds;
+3. logs `Going to run test app from <path>`;
+4. builds the string `az01-signed-fs "<path>"` and passes it to
+   `wordexp(..., 0)`.
+
+`wordexp` performs command substitution. A filename containing
+`$(sh ... run.sh)` therefore executes **as root before the signature check**.
+The `.taimg` itself can be an empty file; it never gets mounted successfully.
+
+Proof from the QEMU lab:
+
+```
+Matching test app version: 1.0.0
+Going to run test app from /media/P4PWN/TestAppsCatalog/.../$(sh${IFS}...run.sh).taimg
+command starting: az01-signed-fs "/media/P4PWN/.../$(sh${IFS}...).taimg"
+```
+
+and from hardware:
+
+```
+=== Tue Oct 20 11:22:57 UTC 2026 prime4 usb payload ===
+ssh-keygen: generating new host keys: RSA ECDSA ED25519
+sshd rc=0
+done
+```
+
+---
+
+## 3. Persistence at a glance
+
+`/etc` and `/var` are overlayfs mounts:
+
+```
+overlay on /etc  lowerdir=/etc  upperdir=/data/system/etc/overlay
+overlay on /var  lowerdir=/var  upperdir=/data/system/var/overlay
+```
+
+`/data` is plain ext4 with no integrity check. The factory boot cleanup removes
+only `ssh`, `passwd`, `shadow`, `group` and `gshadow` from the upper layer.
+Everything else survives.
+
+The persistence payload installs:
+
+* `/data/payload/activate.sh` — sets the root password hash, generates host
+  keys, starts sshd with a config on `/data`;
+* `/data/payload/preload.so` — freestanding ARM32 shared object;
+* `/etc/ld.so.preload` — loads `preload.so` into every dynamic process;
+* a systemd unit, a `modprobe install` directive and a udev rule as secondary
+  triggers.
+
+The preload arms once per boot, keyed on
+`/proc/sys/kernel/random/boot_id` (the original `O_EXCL` marker only ever ran
+once in the lifetime of the data partition). It forks
+`/bin/sh /data/payload/activate.sh` as root.
+
+After a cold reboot:
+
+```
+$ ssh root@<unit-ip>
+password: <configured-password>
+uid=0(root) gid=0(root) groups=0(root),10(wheel)
+```
+
+`/data/payload/activate.log` shows a fresh activation each boot.
+
+---
+
+## 4. Repository layout
+
+```
+docs/        full write-ups
+exploit/     USB launcher payload and /data persistence payload
+lab/         Docker/QEMU lab
+client/      public external service client and static HTTPS fetcher
+tests/       offline checks
+```
+
+---
+
+## 5. Quick start (USB route)
+
+Build the ext4 image:
+
+```sh
+PASSWORD='choose-a-strong-password' ./exploit/make_usb_p4pwn.sh
+```
+
+The image is written **raw** to a USB stick (Rufus DD mode, balenaEtcher or
+`dd`). It is not bootable and Windows cannot read it — cancel any format
+prompt.
+
+On the unit:
+
+1. insert the stick;
+2. Settings → About/Update → tap the version/product name five times;
+3. Advanced → **Start Production Test Application**;
+4. wait ~10 seconds;
+5. `ssh root@<unit-ip>` with the configured password.
+
+The launcher may display an “unexpected error” dialog after the auto-run; that
+is the dummy `.taimg` failing to mount. The injected command has already run.
+
+Install persistence:
+
+```sh
+scp -r exploit/preload/* root@<unit-ip>:/data/payload/
+# then follow docs/03-persistence.md to install the /etc overlay files
+```
+
+---
+
+## 6. QEMU lab
+
+The lab runs a fresh `debian:bookworm` container with:
+
+* `qemu-system-arm` 7.2;
+* a Debian armmp kernel (`6.1.0-50-armmp`) and a custom initramfs;
+* a QEMU `virt` DTB patched with `inmusic,az01` and `inmusic,product-code = "JC11S"`;
+* the extracted Engine OS rootfs as a virtio disk;
+* a GPT data disk with the `931ad49d-…` PARTUUID;
+* the USB image attached as `usb-storage`;
+* `-smp 2` to avoid a TCG ARM TLB-flush hang seen with 4 vCPUs.
+
+See `docs/04-qemu-lab.md` and `lab/` for the exact scripts.
+
+---
+
+## 7. external service client status
+
+`client/external service-public.sh` uses the public `api-v2.external service.com` flow and
+selects unencrypted progressive MP3 or HLS. It does **not** implement
+Widevine or Go+ DRM.
+
+Engine OS 4.3.4’s busybox `wget` has no TLS. `client/scfetch` is a static
+ARMv7 Go HTTPS fetcher used in its place.
+
+Verified on hardware:
+
+* public track resolution (`track: Flickermood`, `playing selected stream`);
+* static ffmpeg’s ALSA output with a generated sine (`alsa_rc=0`).
+
+Open: the same ffmpeg build segfaults when opening the external service HTTPS/HLS
+stream. The next step is either a TLS-enabled ffmpeg build known to work on
+this kernel or downloading HLS segments with `scfetch` and feeding ffmpeg from
+local files. Go+-only tracks remain server-side gated; the user’s own feed
+requires their OAuth token.
+
+---
+
+## 8. Disclosure and safety
+
+This repository is research material for hardware you own. The exploit gives
+root and disables signature enforcement paths at runtime; do not run it on
+equipment you do not control.
+
+The launcher bug and the `/data` trust model are worth reporting to the vendor.
+See `docs/06-defense.md` for mitigation ideas and `SECURITY.md` for contact.
+
+[icedream/denon-prime4]: https://github.com/icedream/denon-prime4
+[Peyton-C/QEngine]: https://github.com/Peyton-C/QEngine
+[DeathCamel58/denon-reverse-engineering]: https://github.com/DeathCamel58/denon-reverse-engineering

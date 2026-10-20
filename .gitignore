@@ -1,0 +1,12 @@
+build/
+lab/vm/
+*.img
+*.deb
+*.iso
+serial.log
+mon.sock
+*.key
+*.pem
+authorized_keys
+__pycache__/
+*.pyc
