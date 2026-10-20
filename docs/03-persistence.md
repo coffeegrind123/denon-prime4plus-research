@@ -102,3 +102,32 @@ Delete `/data/system/etc/overlay/ld.so.preload` from the data partition
 (offline with `debugfs` or through a temporary root shell) to disable the
 preload. Never install a `ld.so.preload` that points at a missing or corrupt
 library.
+
+## 8. Footprint on the unit
+
+Nothing is written to the signed rootfs (p10), kernel (p9), bootloader or SPL.
+The writable footprint is:
+
+| Path | Size | Purpose |
+|---|---:|---|
+| `/data/payload/` | ~40 KiB | persistence scripts, preload, host key |
+| `/data/system/etc/overlay/` | ~110 KiB | ld.so.preload, systemd/modprobe/udev entries, overlay metadata |
+| `/data/prime4-app/` | ~47 MiB | client scripts, ffmpeg, jq, scfetch, external service-resolve |
+| `/data/probe.sh`, `/data/probe.txt` | ~20 KiB | diagnostics |
+| `/data/prime4usb.log`, `/data/external service-local-play.log` | ~8 KiB | evidence |
+
+`/tmp` is used for the HLS download and local fMP4; it is tmpfs and disappears
+on reboot.
+
+Uninstall (keeps SSH until the reboot that removes the preload):
+
+```sh
+rm -f /data/system/etc/overlay/ld.so.preload
+rm -rf /data/prime4-app /data/payload
+rm -f /data/prime4usb.log /data/external service-local-play.log
+# optional: remove the systemd/modprobe/udev overlay files
+```
+
+The `ld.so.preload` file must be removed first; the overlay upper cannot be
+safely edited while it is mounted, so remove the other files from a fresh
+boot/USB shell.

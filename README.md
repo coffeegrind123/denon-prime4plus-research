@@ -31,6 +31,7 @@ included.
 | Boot trigger | `/etc/ld.so.preload` + a boot-id marker; survives reboots |
 | Access | password SSH on port 22, verified after a cold reboot |
 | QEMU lab | full Engine OS 4.3.4 userspace boot in a Docker container |
+| Public external service playback | external service resolver + local HLS + ALSA; heard on hardware |
 
 The vendor’s own firmware update tooling and the community reverse-engineering
 projects ([icedream/denon-prime4], [Peyton-C/QEngine], [DeathCamel58/denon-reverse-engineering])
@@ -202,16 +203,21 @@ Widevine or Go+ DRM.
 Engine OS 4.3.4’s busybox `wget` has no TLS. `client/scfetch` is a static
 ARMv7 Go HTTPS fetcher used in its place.
 
-Verified on hardware:
+The static ffmpeg build segfaults on **any** http/https input on this device
+(HTTP and HTTPS both SIGSEGV; local files and ALSA are fine). The working path
+is:
 
-* public track resolution (`track: Flickermood`, `playing selected stream`);
-* static ffmpeg’s ALSA output with a generated sine (`alsa_rc=0`).
+1. `client/external service-resolve` — links external service `lib/sc`, resolves the track
+   and selects a non-DRM stream;
+2. `client/hls-local.sh` — uses `scfetch` to download the m3u8, `init.mp4` and
+   all `dataNNN.m4s` segments, then concatenates them locally;
+3. `client/play-external service.sh` — plays the local fMP4 through ALSA.
 
-Open: the same ffmpeg build segfaults when opening the external service HTTPS/HLS
-stream. The next step is either a TLS-enabled ffmpeg build known to work on
-this kernel or downloading HLS segments with `scfetch` and feeding ffmpeg from
-local files. Go+-only tracks remain server-side gated; the user’s own feed
-requires their OAuth token.
+Verified on hardware: a 3:33 AAC track played through `plughw:0,0` with
+ffmpeg exit 0, and was audible on the Prime 4+ output.
+
+Go+-only tracks remain server-side gated; the user’s own feed requires their
+OAuth token. Engine deck integration is still open.
 
 ---
 

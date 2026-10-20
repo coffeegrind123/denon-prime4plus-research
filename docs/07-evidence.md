@@ -85,5 +85,15 @@ ALSA isolation:
 ffmpeg -f lavfi -i sine=... -f alsa plughw:0,0  -> exit 0
 ```
 
-The HTTPS/HLS stream path is still being debugged; see
-`docs/05-external service.md`.
+Local external service HLS playback:
+
+```
+external service-resolve -> {"title":"Flickermood","protocol":"hls",...}
+hls-local.sh       -> 3:33.89, AAC LC, 44100 Hz, stereo
+ffmpeg -i local.mp4 -t 5 -f null -   -> exit 0
+ffmpeg -i local.mp4 -t 10 -f alsa plughw:0,0 -> exit 0, 1723 KiB audio
+```
+
+The track was audible on the Prime 4+ output. Engine was stopped for the
+playback test and restarted afterward; the signed rootfs remained mounted
+read-only.
