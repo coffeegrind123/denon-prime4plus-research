@@ -1,0 +1,32 @@
+Subject: Security report - Engine OS 4.3.4 test-app launcher command injection (root)
+
+Hello inMusic / Denon DJ support,
+
+I am reporting a security vulnerability in Engine OS 4.3.4 on the Denon DJ
+PRIME 4+ (product code JC11S).
+
+The factory Production Test Application launcher constructs a shell command
+from a .taimg path and evaluates it with wordexp() without WRDE_NOCMD. A
+crafted filename executes arbitrary commands as root before the package
+signature or mount check. The launcher auto-runs a matching catalogue entry
+after five seconds.
+
+Impact: root code execution and persistent modification of the unit through
+the writable /data partition, without a vendor key.
+Attack vector: physical USB stick plus the factory test menu; no credentials.
+Affected: 4.3.4 verified. Builds shipping test-app-launcher 2.1.4 are presumed
+affected.
+
+Suggested fix: use argv-based execution or WRDE_NOCMD; reject shell
+metacharacters in catalogue filenames; verify signatures before execution;
+sandbox the launcher.
+
+Technical details and a Docker/QEMU reproduction:
+https://github.com/coffeegrind123/denon-prime4plus-research
+
+Please route this to your security/PSIRT contact and confirm a disclosure
+timeline. Credit: coffeegrind123. I can provide the reproduction and a
+coordinated-disclosure write-up.
+
+Regards,
+coffeegrind123
