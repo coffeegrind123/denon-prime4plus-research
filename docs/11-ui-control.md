@@ -64,8 +64,8 @@ tools/ui-control/unit-ui.sh doubletap 530 150
 tools/ui-control/unit-ui.sh drag 800 130 640 740 900 24
 ```
 
-`tap`, `doubletap`, and `drag` take logical 1280x800 coordinates. `raw-tap` bypasses the
-rotation transform if the device or screen configuration changes.
+`tap`, `doubletap`, and `drag` take logical 1280x800 coordinates. `raw-tap`
+bypasses the rotation transform if the device or screen configuration changes.
 
 The helper builds the ARMv7 binary in the `shimbuild` Docker container and
 copies it to `/tmp` for each interaction. The device is not modified

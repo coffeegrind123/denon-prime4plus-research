@@ -70,3 +70,20 @@ Matching test app version: 1.0.0
 uid=0(root) ...
 Permission denied (password).
 ```
+
+## 6. On-player EaaS source startup
+
+After network readiness, the `/data` boot hook started the enabled local source:
+
+```
+... waiting for network on wlan0
+... <local-source-service> started
+EAAS source ready: UDP 11224, gRPC 50010, HTTP 50020
+CreateTrust device="" key="" wireguard_port=0
+GetLibrary library=""
+GetTracks playlist="" limit=200 returned=0
+```
+
+Engine also owned TCP 50010 at its primary LAN address and `127.0.0.1`; the
+source used the standard ports only on a secondary LAN alias. A non-local HTTP
+peer received `403 Forbidden`.

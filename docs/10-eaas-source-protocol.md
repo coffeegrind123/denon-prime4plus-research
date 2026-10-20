@@ -47,8 +47,9 @@ The working layout is:
 The standard ports matter. A discovery reply advertising gRPC 50110 appeared in
 the source picker, but activation failed with a generic "No connection" dialog.
 Advertising 50010 on the alias made Engine perform `CreateTrust`, `GetLibrary`,
-`GetTracks`, and `GetTrack` immediately. HTTP 50020 is then inferred from the
-standard gRPC port.
+`GetTracks`, and `GetTrack` immediately. The local source must also provide
+HTTP 50020 on the same alias; Engine follows the standard gRPC-to-HTTP port
+relationship.
 
 Restrict the gRPC and HTTP endpoints to local interface addresses. The
 unauthenticated trust service should not be reachable from other LAN hosts.
@@ -57,9 +58,9 @@ unauthenticated trust service should not be reachable from other LAN hosts.
 
 New unit files written under `/etc/systemd/system` survive a reboot, but this
 firmware does not include newly added `multi-user.target.wants` entries or
-service drop-ins in the boot transaction until a later `daemon-reload`.
-`systemctl is-enabled` can report `enabled` while the service remains inactive
-after boot.
+service drop-ins in the boot transaction. They remain inactive until a later
+`daemon-reload` and explicit start. `systemctl is-enabled` can report
+`enabled` while the service is still inactive after boot.
 
 Use the existing deterministic `/data/payload/activate.sh` hook. It should
 start a `/data` helper in the background, and that helper should wait for:

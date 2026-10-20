@@ -14,10 +14,11 @@ Production Test Application, wait for the auto-run.
 
 ## Remaining gaps
 
-1. **HTTPS fetcher** — the device's stock fetchers lack TLS. A static helper
-   can provide HTTPS without replacing system libraries.
-2. **Network-input decoder crash** — the static 7.0.2 build SIGSEGVs on
-   http/https input on this device. Local files and ALSA output work.
+1. **External-source clients** — the on-device EaaS layout is documented and
+   locally verified; other Engine builds still need the same discovery, port,
+   and listener checks.
+2. **Boot transaction coverage** — `/data` hooks work, but newly written
+   systemd wants/drop-ins require a later `daemon-reload` on this firmware.
 3. **Cleanup** — see `docs/03-persistence.md` for the exact `/data` footprint
    and uninstall steps.
 
@@ -27,5 +28,6 @@ Production Test Application, wait for the auto-run.
 * persistence log: `/data/payload/activate.log`
 * USB payload log: `/data/prime4usb.log`
 * probe: `/data/probe.txt`
+* application boot helper: `/data/prime4-app/boot-start.log`
 
 The signed rootfs, kernel and bootloader are never modified.

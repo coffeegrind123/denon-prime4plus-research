@@ -54,7 +54,9 @@ On every boot it:
   shadow is removed by the boot cleanup);
 * generates an ed25519 host key on `/data`;
 * starts `/usr/sbin/sshd -f /data/payload/sshd_config`;
-* optionally attaches a root shell to the USB serial gadget.
+* optionally attaches a root shell to the USB serial gadget;
+* can launch `/data`-resident boot hooks for services that wait until the
+  network is ready.
 
 The sshd config uses password authentication only:
 
@@ -68,10 +70,17 @@ PermitRootLogin yes
 
 No `UsePAM` — the binary has no PAM support.
 
+New systemd wants entries and drop-ins written under `/etc` survive, but this
+firmware does not include them in the boot transaction until a later
+`daemon-reload`. A boot hook that calls `systemctl daemon-reload` and starts the
+service after a default route and connectivity check is the reliable route.
+
 ## 5. Secondary triggers
 
-The systemd unit, `modprobe install` directive and udev rule are kept as
-best-effort fallbacks. The `ld.so.preload` route is the deterministic one.
+The systemd unit, `modprobe install` directive and udev rule remain persistent
+overlay files, but newly added systemd wants/drop-ins are not included in the
+current boot transaction. They become usable only after a later
+`daemon-reload`. The `ld.so.preload` route is the deterministic trigger.
 
 ## 6. Install and verify
 
@@ -81,6 +90,10 @@ ssh root@<unit> 'mkdir -p /data/system/etc/overlay/{systemd/system/multi-user.ta
 # copy the overlay files, then:
 ssh root@<unit> 'sync; reboot'
 ```
+
+Do not rely on the newly written `multi-user.target.wants` entry to start by
+itself. A `/data` boot helper should run after network readiness, call
+`systemctl daemon-reload`, and start the target service.
 
 After the reboot:
 
@@ -112,20 +125,19 @@ The writable footprint is:
 |---|---:|---|
 | `/data/payload/` | ~40 KiB | persistence scripts, preload, host key |
 | `/data/system/etc/overlay/` | ~110 KiB | ld.so.preload, systemd/modprobe/udev entries, overlay metadata |
+| `/data/prime4-app/` | deployment-dependent | optional application and boot-helper data |
 | `/data/probe.sh`, `/data/probe.txt` | ~20 KiB | diagnostics |
 | `/data/prime4usb.log` | ~8 KiB | evidence |
 
 `/tmp` is tmpfs and disappears on reboot.
 
-Uninstall (keeps SSH until the reboot that removes the preload):
+Emergency online disable (the current process tree keeps the preload; removal
+takes effect on the next boot):
 
 ```sh
 rm -f /data/system/etc/overlay/ld.so.preload
-rm -rf /data/payload
-rm -f /data/prime4usb.log
-# optional: remove the systemd/modprobe/udev overlay files
 ```
 
-The `ld.so.preload` file must be removed first; the overlay upper cannot be
-safely edited while it is mounted, so remove the other files from a fresh
-boot/USB shell.
+For full cleanup, remove `/data/payload`, `/data/prime4usb.log`, and the
+optional systemd/modprobe/udev overlay files from a fresh boot or USB shell
+after the preload is no longer active.

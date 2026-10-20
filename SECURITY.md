@@ -8,9 +8,10 @@ For issues in this repository, use GitHub private vulnerability reporting on
 this repo.
 
 For the underlying device issues (launcher `wordexp` injection, `/data`
-overlay trust model), report them to Denon DJ / inMusic through their security
-contact. A vendor reproduction does not require firmware or private keys: the
-Docker/QEMU lab in `lab/` boots the vendor rootfs supplied by the researcher.
+overlay trust model), use Denon DJ / inMusic technical support. No public
+security contact or security.txt was found. A vendor reproduction does not
+require firmware or private keys: the Docker/QEMU lab in `lab/` boots the
+vendor rootfs supplied by the researcher.
 
 ## Scope
 
@@ -20,6 +21,7 @@ In scope:
 * `wordexp` command construction;
 * `/etc` / `/var` overlay trust boundaries;
 * `/data` preload/systemd/modprobe/udev trust.
+* local EaaS source listener isolation and writable-overlay boot activation.
 
 Out of scope:
 

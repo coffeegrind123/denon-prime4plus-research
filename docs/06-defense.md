@@ -20,6 +20,14 @@
   `install` directives that originate from `/data`.
 * Restrict the overlay upper to data-only paths.
 
+## Local EaaS sources
+
+* Bind source listeners to a dedicated local address instead of all
+  interfaces.
+* Reject gRPC and HTTP peers that are not addresses on the unit.
+* Do not expose the unauthenticated trust service to the LAN or internet.
+* Apply secondary interface addresses only after DHCP and connectivity checks.
+
 ## Kernel FIT
 
 * Set `required = "conf"` on the kernel FIT configurations so the RSA
@@ -38,6 +46,7 @@
 
 ## Disclosure
 
-Report the launcher `wordexp` issue and the `/data` trust model to the vendor
-through their security contact. Give them the QEMU reproduction; no vendor
-firmware or keys are required for it.
+Report the launcher `wordexp` issue and the `/data` trust model through the
+vendor's technical support channel; no public security contact or security.txt
+was found. Give them the QEMU reproduction; no vendor firmware or keys are
+required for it.

@@ -2,14 +2,16 @@
 
 Research notes and proof-of-concept code for a Denon DJ Prime 4+ (`JC11S`)
 running Engine OS **4.3.4** (Buildroot 2023.02.11).
+Current research release: **v0.2.3**.
 
-The work covers three things:
+The work covers four things:
 
 1. a no-PC code-execution path through the factory **Production Test
    Application** launcher, reachable from a USB stick;
 2. a persistent root shell built on the unverified `/data` partition;
 3. a complete Docker-hosted QEMU lab used to reproduce and test every step
    against the real ARMv7 userland.
+4. external EaaS source behavior and hardware UI capture/input research.
 
 Everything below was reproduced on hardware and in emulation. No vendor
 firmware, private keys, device serials, LAN addresses or personal data are
@@ -102,8 +104,9 @@ The persistence payload installs:
   keys, starts sshd with a config on `/data`;
 * `/data/payload/preload.so` — freestanding ARM32 shared object;
 * `/etc/ld.so.preload` — loads `preload.so` into every dynamic process;
-* a systemd unit, a `modprobe install` directive and a udev rule as secondary
-  triggers.
+* a systemd unit, a `modprobe install` directive and a udev rule as persistent
+  overlay files. New boot units require a later `daemon-reload`; the
+  `/data/payload/activate.sh` path remains the deterministic trigger.
 
 The preload arms once per boot, keyed on
 `/proc/sys/kernel/random/boot_id` (the original `O_EXCL` marker only ever ran
@@ -197,14 +200,15 @@ See `docs/04-qemu-lab.md` and `lab/` for the exact scripts.
 ## 7. External-source and UI research
 
 Engine OS 4.3.4 can discover external EaaS libraries over UDP 11224 and consume
-them through the unencrypted gRPC service on TCP 50010. The protocol,
-source-tree mapping, and stream contract are documented in
+them through gRPC on TCP 50010 and HTTP on TCP 50020. On-player sources bind
+both standard ports to a secondary LAN alias and send discovery replies from
+that same address. The protocol, source-tree mapping, and stream contract are documented in
 [`docs/10-eaas-source-protocol.md`](docs/10-eaas-source-protocol.md).
 That document also records the standard-port layout for a source hosted on the
 same player and the boot-safe activation route through the `/data` overlay.
 
 The hardware UI can be captured through `/dev/fb0` and driven through
-`/dev/uinput`. The calibrated capture/tap/drag workflow is documented in
+`/dev/uinput`. The calibrated capture/tap/doubletap/drag workflow is documented in
 [`docs/11-ui-control.md`](docs/11-ui-control.md) and implemented under
 `tools/ui-control/`.
 

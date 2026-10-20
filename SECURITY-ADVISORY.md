@@ -88,4 +88,4 @@ the path is checked only after the command has been expanded and executed.
 * Timeline:
   * 2026-10-20 — discovered and reproduced in QEMU.
   * 2026-10-20 — reproduced on hardware.
-  * vendor notification / CVE request pending.
+  * CVE request submitted to MITRE; CVE ID pending.
