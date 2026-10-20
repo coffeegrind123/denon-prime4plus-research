@@ -1,7 +1,8 @@
 # Engine OS update paths and soft guard
 
-All tests here ran in the disposable `eosvm2` QEMU container. No hardware
-image or bootloader was modified.
+Development and acceptance tests ran in the disposable `eosvm2` QEMU
+container. The final package was then smoke-tested live on the owned unit.
+No hardware image or bootloader was modified.
 
 ## Online update check
 
@@ -132,6 +133,28 @@ The boot-reapply test used a one-shot systemd test unit calling the same
 installer. On the device, the equivalent call belongs in
 `/data/payload/activate.sh` because newly added late-overlay units are not
 reliably loaded during the boot transaction.
+
+## Live installation smoke test
+
+The validated package was installed under `/data/update-guard-src`, with the
+installer called from `/data/payload/activate.sh` immediately before the hook
+exits.
+
+Live results:
+
+```text
+source file hashes match the tagged repository
+repeated install succeeds
+saved original hashes remain unchanged
+az01-update --help succeeds
+file/network/erase updates are blocked
+all planck-remote-screen update forms are blocked
+reboot loader is blocked with unchanged uptime
+normal systemctl and Engine operations remain active
+```
+
+The pre-install `activate.sh` was backed up under
+`/data/prime4-app/backups/`.
 
 ## Scope and bypasses
 
