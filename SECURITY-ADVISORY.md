@@ -1,6 +1,6 @@
 # Engine OS test-app launcher: OS command injection (CWE-78)
 
-Status: **CVE requested / pending**  
+Status: **CVE requested — CAN-2026-2040266 submitted 2026-10-20; CVE ID pending**  
 Reported by: **coffeegrind123** (confirmed credit)  
 Product: Denon DJ PRIME 4+ (`JC11S`), inMusic Engine OS  
 Affected: 4.3.4 verified; builds with `test-app-launcher` 2.1.4 presumed

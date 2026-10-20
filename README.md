@@ -32,7 +32,7 @@ included.
 | Access | password SSH on port 22, verified after a cold reboot |
 | QEMU lab | full Engine OS 4.3.4 userspace boot in a Docker container |
 | Public external service playback | external service resolver + local HLS + ALSA; heard on hardware |
-| Disclosure | CVE request pending (MITRE); credit `coffeegrind123` |
+| Disclosure | `CAN-2026-2040266` submitted to MITRE; CVE ID pending; credit `coffeegrind123` |
 
 The vendor’s own firmware update tooling and the community reverse-engineering
 projects ([icedream/denon-prime4], [Peyton-C/QEngine], [DeathCamel58/denon-reverse-engineering])
