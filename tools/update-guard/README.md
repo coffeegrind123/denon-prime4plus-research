@@ -1,0 +1,63 @@
+# Update guard prototype
+
+This is a reversible, soft update lock for Engine OS 4.3.4. It was developed
+and tested only against disposable QEMU images.
+
+## What it blocks
+
+* `/usr/sbin/az01-update` — local USB/file updates, network updates, factory
+  reset, and data erase;
+* `/usr/bin/planck-remote-screen --update` — the online update handoff;
+* `/sbin/reboot loader` — Engine's transition into bootloader update mode;
+* Engine's default online update feed — replaced with an unreachable local
+  URL in the guarded copy of `/usr/Engine/Scripts/engine`.
+
+The original binaries and engine script are copied into
+`/data/update-guard/*.orig`. Bind mounts place small wrappers over the
+read-only rootfs paths. Reboot, or running `uninstall.sh`, removes the bind
+mounts without changing the signed rootfs.
+
+## Install
+
+Copy this directory to the player as `/data/update-guard-src`, then run:
+
+```sh
+/data/update-guard-src/install.sh
+```
+
+For automatic reapplication after boot, invoke that command from the existing
+`/data/payload/activate.sh` before Engine starts:
+
+```sh
+if [ -x /data/update-guard-src/install.sh ]; then
+    /data/update-guard-src/install.sh \
+        >>/data/update-guard/install.log 2>&1
+fi
+```
+
+Installation is idempotent while mounted. If `*.orig` files are missing and a
+wrapper is already mounted, the installer fails closed and asks for a reboot
+rather than copying the wrapper as the original.
+
+## Remove
+
+```sh
+/data/update-guard/uninstall.sh
+```
+
+or reboot. The wrappers remain in `/data`, but update functionality is restored
+as soon as the bind mounts disappear.
+
+## Verified in QEMU
+
+```text
+az01-update --file ...  -> blocked
+planck-remote-screen --update ... -> blocked
+reboot loader -> blocked
+systemctl is-active ... -> normal result
+```
+
+The guard is deliberately not a hard security boundary. A local root user can
+invoke `*.orig` directly, remove `/data`, or boot the signed recovery/update
+image. Physical update mode bypasses the normal rootfs and therefore bypasses
+this guard entirely.

@@ -2,9 +2,9 @@
 
 Research notes and proof-of-concept code for a Denon DJ Prime 4+ (`JC11S`)
 running Engine OS **4.3.4** (Buildroot 2023.02.11).
-Current research release: **v0.2.6**.
+Current research release: **v0.2.7**.
 
-The work covers four things:
+The work covers five things:
 
 1. a no-PC code-execution path through the factory **Production Test
    Application** launcher, reachable from a USB stick;
@@ -12,6 +12,7 @@ The work covers four things:
 3. a complete Docker-hosted QEMU lab used to reproduce and test every step
    against the real ARMv7 userland.
 4. external EaaS source behavior and hardware UI capture/input research.
+5. Engine OS update paths and a reversible soft update guard.
 
 Everything below was reproduced on hardware and in emulation. No vendor
 firmware, private keys, device serials, LAN addresses or personal data are
@@ -214,7 +215,20 @@ The hardware UI can be captured through `/dev/fb0` and driven through
 
 ---
 
-## 8. Disclosure and safety
+## 8. Update guard
+
+The updater, online feed, manual file/network handoffs, and loader transition
+are mapped in [`docs/12-update-guard.md`](docs/12-update-guard.md). A tested QEMU
+prototype under `tools/update-guard/` blocks OS updates, factory erase, remote
+update mode, and `reboot loader` while keeping normal service management
+working.
+
+This is a soft lock only. Recovery/USB update mode runs outside the rootfs and
+bypasses it.
+
+---
+
+## 9. Disclosure and safety
 
 The launcher command injection is documented in
 [`SECURITY-ADVISORY.md`](SECURITY-ADVISORY.md). The CVE request draft and

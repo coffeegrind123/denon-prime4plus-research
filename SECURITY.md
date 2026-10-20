@@ -22,6 +22,7 @@ In scope:
 * `/etc` / `/var` overlay trust boundaries;
 * `/data` preload/systemd/modprobe/udev trust.
 * local EaaS source listener isolation and writable-overlay boot activation.
+* OS update, factory-reset, and loader-mode handoff paths.
 
 Out of scope:
 
