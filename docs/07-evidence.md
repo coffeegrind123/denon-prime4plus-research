@@ -87,3 +87,10 @@ GetTracks playlist="" limit=200 returned=0
 Engine also owned TCP 50010 at its primary LAN address and `127.0.0.1`; the
 source used the standard ports only on a secondary LAN alias. A non-local HTTP
 peer received `403 Forbidden`.
+
+A controlled five-second `GetTrack` timeout returned successfully for an
+uncached track after the source switched to concurrent segment-length probes
+and background parallel materialization. The hardware UI then loaded another
+uncached track through `processGetTrack`, HTTP download, and OfflineAnalyzer
+without a deadline error. It also rendered a non-empty liked-playlist hierarchy
+and loaded tracks from a selected playlist using author-qualified IDs.

@@ -75,6 +75,21 @@ Wi-Fi is still completing DHCP can disrupt the boot-time network path. Do not
 create an ordering dependency that blocks `engine.service`; Engine discovers
 the source on later scans.
 
+Engine may cancel `GetTrack` after roughly five seconds. A source that
+materializes HLS synchronously can therefore fail only slower tracks.
+
+The reliable pattern is:
+
+1. fetch the media playlist;
+2. probe init and segment lengths concurrently with `HEAD`;
+3. return the exact aggregate size from `GetTrack`;
+4. materialize in the background using bounded parallel batches;
+5. let the subsequent HTTP download wait for the same cache entry.
+
+The download slot remains cancelable, while media copying uses a separate
+15-minute timeout as a fallback. This avoids both the short RPC deadline and
+unbounded background work.
+
 ## gRPC services
 
 ```text
@@ -154,6 +169,14 @@ Content-Length
 Content-Range
 Accept-Ranges
 ```
+
+For nested liked-playlist trees, use the provider's dedicated playlist feed.
+The mixed activity feed can contain only tracks in its first several pages, so
+inferring playlist likes from it produces an empty menu branch.
+
+Playlist IDs should include the owner permalink as well as the playlist
+permalink. Provider playlist permalinks are not globally unique; author-
+qualified IDs prevent collisions in nested feeds.
 
 ## Testing
 
