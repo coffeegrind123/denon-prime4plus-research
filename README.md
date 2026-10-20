@@ -32,6 +32,7 @@ included.
 | Access | password SSH on port 22, verified after a cold reboot |
 | QEMU lab | full Engine OS 4.3.4 userspace boot in a Docker container |
 | Public external service playback | external service resolver + local HLS + ALSA; heard on hardware |
+| Disclosure | CVE request pending (MITRE); credit `coffeegrind123` |
 
 The vendor’s own firmware update tooling and the community reverse-engineering
 projects ([icedream/denon-prime4], [Peyton-C/QEngine], [DeathCamel58/denon-reverse-engineering])
@@ -222,6 +223,12 @@ OAuth token. Engine deck integration is still open.
 ---
 
 ## 8. Disclosure and safety
+
+The launcher command injection is documented in
+[`SECURITY-ADVISORY.md`](SECURITY-ADVISORY.md). The CVE request draft and
+vendor notification text are in [`docs/09-cve-request.md`](docs/09-cve-request.md).
+Credit: **coffeegrind123**. Handoff/remaining work:
+[`docs/08-handoff.md`](docs/08-handoff.md).
 
 This repository is research material for hardware you own. The exploit gives
 root and disables signature enforcement paths at runtime; do not run it on
