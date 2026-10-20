@@ -61,3 +61,19 @@ The guard is deliberately not a hard security boundary. A local root user can
 invoke `*.orig` directly, remove `/data`, or boot the signed recovery/update
 image. Physical update mode bypasses the normal rootfs and therefore bypasses
 this guard entirely.
+
+## QEMU acceptance coverage
+
+Tested successfully:
+
+* clean install and idempotent reinstall;
+* unchanged original hashes after repeated install;
+* all local/network/erase update invocations blocked;
+* every `planck-remote-screen` update spelling blocked;
+* normal systemctl and hardware-info use;
+* Engine `UpdateFromFile`, `UpdateFromUrl`, `UpdateFromLoader`, and
+  `FactoryReset` quit-reason branches blocked;
+* `reboot loader` rejected without changing guest uptime;
+* uninstall restoring all original hashes;
+* reinstalling after uninstall;
+* automatic reapplication before Engine during boot.

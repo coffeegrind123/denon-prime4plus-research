@@ -91,12 +91,50 @@ QEMU results:
 
 ```text
 az01-update --file ...  -> blocked
+az01-update --net ...   -> blocked
+az01-update --erase-data -> blocked
 planck-remote-screen --update ... -> blocked
 reboot loader -> blocked
 systemctl is-active ... -> normal result
 ```
 
 The QEMU guest stayed running after the blocked loader request.
+
+## Acceptance matrix
+
+The guard was tested against a fresh disposable rootfs/data pair:
+
+| Test | Result |
+|---|---|
+| Install from unmounted originals | passed |
+| Run installer a second time | passed; `*.orig` hashes unchanged |
+| `az01-update --help` | allowed |
+| `az01-update --file` | blocked |
+| `az01-update --net` | blocked |
+| `az01-update --erase-data` | blocked |
+| `planck-remote-screen --update=X` | blocked |
+| `planck-remote-screen --update X` | blocked |
+| `planck-remote-screen -u X` | blocked |
+| `reboot loader` | blocked; guest uptime unchanged |
+| Normal `systemctl is-active` | passed |
+| Normal hardware-info utility | passed |
+| Engine `UpdateFromFile` branch | blocked at updater wrapper |
+| Engine `UpdateFromUrl` branch | blocked at remote-screen wrapper |
+| Engine `UpdateFromLoader` branch | blocked at reboot wrapper |
+| Engine `FactoryReset` branch | blocked at updater wrapper |
+| Uninstall | all bind mounts removed |
+| Original hashes after uninstall | match saved `*.orig` hashes |
+| Reinstall after uninstall | passed |
+| Reapply before Engine at boot | passed |
+
+The Engine branch tests used a disposable fake Engine process that emitted each
+quit reason, allowing the real guarded `engine` shell script to execute its
+normal update cases without starting the QEMU graphics stack.
+
+The boot-reapply test used a one-shot systemd test unit calling the same
+installer. On the device, the equivalent call belongs in
+`/data/payload/activate.sh` because newly added late-overlay units are not
+reliably loaded during the boot transaction.
 
 ## Scope and bypasses
 
