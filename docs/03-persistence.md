@@ -112,19 +112,17 @@ The writable footprint is:
 |---|---:|---|
 | `/data/payload/` | ~40 KiB | persistence scripts, preload, host key |
 | `/data/system/etc/overlay/` | ~110 KiB | ld.so.preload, systemd/modprobe/udev entries, overlay metadata |
-| `/data/prime4-app/` | ~47 MiB | client scripts, ffmpeg, jq, scfetch, external service-resolve |
 | `/data/probe.sh`, `/data/probe.txt` | ~20 KiB | diagnostics |
-| `/data/prime4usb.log`, `/data/external service-local-play.log` | ~8 KiB | evidence |
+| `/data/prime4usb.log` | ~8 KiB | evidence |
 
-`/tmp` is used for the HLS download and local fMP4; it is tmpfs and disappears
-on reboot.
+`/tmp` is tmpfs and disappears on reboot.
 
 Uninstall (keeps SSH until the reboot that removes the preload):
 
 ```sh
 rm -f /data/system/etc/overlay/ld.so.preload
-rm -rf /data/prime4-app /data/payload
-rm -f /data/prime4usb.log /data/external service-local-play.log
+rm -rf /data/payload
+rm -f /data/prime4usb.log
 # optional: remove the systemd/modprobe/udev overlay files
 ```
 

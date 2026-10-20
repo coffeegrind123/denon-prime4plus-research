@@ -31,7 +31,6 @@ included.
 | Boot trigger | `/etc/ld.so.preload` + a boot-id marker; survives reboots |
 | Access | password SSH on port 22, verified after a cold reboot |
 | QEMU lab | full Engine OS 4.3.4 userspace boot in a Docker container |
-| Public external service playback | external service resolver + local HLS + ALSA; heard on hardware |
 | Disclosure | `CAN-2026-2040266` submitted to MITRE; CVE ID pending; credit `coffeegrind123` |
 
 The vendor’s own firmware update tooling and the community reverse-engineering
@@ -130,8 +129,8 @@ uid=0(root) gid=0(root) groups=0(root),10(wheel)
 docs/        full write-ups
 exploit/     USB launcher payload and /data persistence payload
 lab/         Docker/QEMU lab
-client/      public external service client and static HTTPS fetcher
 tests/       offline checks
+tools/       host-side research helpers
 ```
 
 ---
@@ -195,30 +194,17 @@ See `docs/04-qemu-lab.md` and `lab/` for the exact scripts.
 
 ---
 
-## 7. external service client status
+## 7. External-source and UI research
 
-`client/external service-public.sh` uses the public `api-v2.external service.com` flow and
-selects unencrypted progressive MP3 or HLS. It does **not** implement
-Widevine or Go+ DRM.
+Engine OS 4.3.4 can discover external EaaS libraries over UDP 11224 and consume
+them through the unencrypted gRPC service on TCP 50010. The protocol,
+source-tree mapping, and stream contract are documented in
+[`docs/10-eaas-source-protocol.md`](docs/10-eaas-source-protocol.md).
 
-Engine OS 4.3.4’s busybox `wget` has no TLS. `client/scfetch` is a static
-ARMv7 Go HTTPS fetcher used in its place.
-
-The static ffmpeg build segfaults on **any** http/https input on this device
-(HTTP and HTTPS both SIGSEGV; local files and ALSA are fine). The working path
-is:
-
-1. `client/external service-resolve` — links external service `lib/sc`, resolves the track
-   and selects a non-DRM stream;
-2. `client/hls-local.sh` — uses `scfetch` to download the m3u8, `init.mp4` and
-   all `dataNNN.m4s` segments, then concatenates them locally;
-3. `client/play-external service.sh` — plays the local fMP4 through ALSA.
-
-Verified on hardware: a 3:33 AAC track played through `plughw:0,0` with
-ffmpeg exit 0, and was audible on the Prime 4+ output.
-
-Go+-only tracks remain server-side gated; the user’s own feed requires their
-OAuth token. Engine deck integration is still open.
+The hardware UI can be captured through `/dev/fb0` and driven through
+`/dev/uinput`. The calibrated capture/tap/drag workflow is documented in
+[`docs/11-ui-control.md`](docs/11-ui-control.md) and implemented under
+`tools/ui-control/`.
 
 ---
 
