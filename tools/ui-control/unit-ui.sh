@@ -89,6 +89,17 @@ logical_tap() {
     ssh_run "$REMOTE_BINARY tap $raw_x $x $hold"
 }
 
+logical_doubletap() {
+    local x=$1
+    local y=$2
+    local hold=${3:-60}
+    local gap=${4:-120}
+    local raw_x=$((799 - y))
+
+    install_touch
+    ssh_run "$REMOTE_BINARY doubletap $raw_x $x $hold $gap"
+}
+
 logical_drag() {
     local x1=$1
     local y1=$2
@@ -117,6 +128,10 @@ case "${1:-}" in
         shift
         logical_tap "$@"
         ;;
+    doubletap)
+        shift
+        logical_doubletap "$@"
+        ;;
     drag)
         shift
         logical_drag "$@"
@@ -129,6 +144,7 @@ case "${1:-}" in
         cat >&2 <<EOF
 usage: UNIT_HOST=... UNIT_PASS=... $0 capture [FILE.png]
        UNIT_HOST=... UNIT_PASS=... $0 tap X Y [HOLD_MS]
+       UNIT_HOST=... UNIT_PASS=... $0 doubletap X Y [HOLD_MS] [GAP_MS]
        UNIT_HOST=... UNIT_PASS=... $0 drag X1 Y1 X2 Y2 [DURATION_MS] [STEPS]
        UNIT_HOST=... UNIT_PASS=... $0 raw-tap RAW_X RAW_Y [HOLD_MS]
 EOF

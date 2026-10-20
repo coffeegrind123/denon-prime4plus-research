@@ -200,6 +200,8 @@ Engine OS 4.3.4 can discover external EaaS libraries over UDP 11224 and consume
 them through the unencrypted gRPC service on TCP 50010. The protocol,
 source-tree mapping, and stream contract are documented in
 [`docs/10-eaas-source-protocol.md`](docs/10-eaas-source-protocol.md).
+That document also records the standard-port layout for a source hosted on the
+same player and the boot-safe activation route through the `/data` overlay.
 
 The hardware UI can be captured through `/dev/fb0` and driven through
 `/dev/uinput`. The calibrated capture/tap/drag workflow is documented in

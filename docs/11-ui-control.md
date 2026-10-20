@@ -60,10 +60,11 @@ export UNIT_PASS=<password>
 
 tools/ui-control/unit-ui.sh capture /tmp/player.png
 tools/ui-control/unit-ui.sh tap 975 70
+tools/ui-control/unit-ui.sh doubletap 530 150
 tools/ui-control/unit-ui.sh drag 800 130 640 740 900 24
 ```
 
-`tap` and `drag` take logical 1280x800 coordinates. `raw-tap` bypasses the
+`tap`, `doubletap`, and `drag` take logical 1280x800 coordinates. `raw-tap` bypasses the
 rotation transform if the device or screen configuration changes.
 
 The helper builds the ARMv7 binary in the `shimbuild` Docker container and

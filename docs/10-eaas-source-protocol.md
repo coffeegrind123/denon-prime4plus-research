@@ -30,6 +30,50 @@ Docker hosts must advertise an address reachable from the player. Publishing
 UDP 11224 and TCP 50010/50020 is more reliable than host networking on systems
 that filter inbound UDP.
 
+## Source running on the player
+
+Engine on 4.3.4 already listens on TCP 50010 at its primary LAN address and at
+127.0.0.1. A locally hosted source must not bind `0.0.0.0:50010`.
+
+The working layout is:
+
+1. assign a second IPv4 address to the LAN interface (for example,
+   `192.168.4.90/32`);
+2. bind the source's gRPC and HTTP listeners only to that address;
+3. bind the discovery socket to `0.0.0.0:11224` with `SO_REUSEPORT`;
+4. advertise the alias in the discovery URL and set the reply packet's source
+   address to the same alias with `IP_PKTINFO`.
+
+The standard ports matter. A discovery reply advertising gRPC 50110 appeared in
+the source picker, but activation failed with a generic "No connection" dialog.
+Advertising 50010 on the alias made Engine perform `CreateTrust`, `GetLibrary`,
+`GetTracks`, and `GetTrack` immediately. HTTP 50020 is then inferred from the
+standard gRPC port.
+
+Restrict the gRPC and HTTP endpoints to local interface addresses. The
+unauthenticated trust service should not be reachable from other LAN hosts.
+
+## Boot activation on the writable overlay
+
+New unit files written under `/etc/systemd/system` survive a reboot, but this
+firmware does not include newly added `multi-user.target.wants` entries or
+service drop-ins in the boot transaction until a later `daemon-reload`.
+`systemctl is-enabled` can report `enabled` while the service remains inactive
+after boot.
+
+Use the existing deterministic `/data/payload/activate.sh` hook. It should
+start a `/data` helper in the background, and that helper should wait for:
+
+* systemd to accept `systemctl start`;
+* a default route;
+* a primary address on the configured LAN interface;
+* one successful outbound connectivity check.
+
+Apply the secondary source address only after those checks. Adding it while
+Wi-Fi is still completing DHCP can disrupt the boot-time network path. Do not
+create an ordering dependency that blocks `engine.service`; Engine discovers
+the source on later scans.
+
 ## gRPC services
 
 ```text

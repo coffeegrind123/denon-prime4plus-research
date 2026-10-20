@@ -129,6 +129,19 @@ int main(int argc, char **argv) {
         touch_down(x, y);
         usleep((useconds_t)hold_ms * 1000);
         touch_up();
+    } else if (argc >= 4 && strcmp(argv[1], "doubletap") == 0) {
+        int x = atoi(argv[2]);
+        int y = atoi(argv[3]);
+        int hold_ms = argc >= 5 ? atoi(argv[4]) : 60;
+        int gap_ms = argc >= 6 ? atoi(argv[5]) : 120;
+
+        touch_down(x, y);
+        usleep((useconds_t)hold_ms * 1000);
+        touch_up();
+        usleep((useconds_t)gap_ms * 1000);
+        touch_down(x, y);
+        usleep((useconds_t)hold_ms * 1000);
+        touch_up();
     } else if (argc >= 6 && strcmp(argv[1], "drag") == 0) {
         int x1 = atoi(argv[2]);
         int y1 = atoi(argv[3]);
@@ -153,8 +166,9 @@ int main(int argc, char **argv) {
     } else {
         fprintf(stderr,
                 "usage: %s tap X Y [HOLD_MS]\n"
+                "       %s doubletap X Y [HOLD_MS] [GAP_MS]\n"
                 "       %s drag X1 Y1 X2 Y2 [DURATION_MS] [STEPS]\n",
-                argv[0], argv[0]);
+                argv[0], argv[0], argv[0]);
         ioctl(output_fd, UI_DEV_DESTROY);
         return 2;
     }
